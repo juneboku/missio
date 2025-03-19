@@ -84,7 +84,7 @@ func (s *Scanner) Scan() ([]string, error) {
 
 		// 秘匿ファイルかどうかをチェック
 		if s.isSecretFile(path) {
-			files = append(files, path)
+			files = append(files, relPath) // 相対パスを保存
 		}
 
 		return nil

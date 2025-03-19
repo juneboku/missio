@@ -33,18 +33,10 @@ func main() {
 		}
 
 		scanner := core.NewScanner(args[0], *verbose, *maxDepth)
-		files, err := scanner.Scan()
+		_, err := scanner.Scan()
 		if err != nil {
 			fmt.Printf("エラー: %v\n", err)
 			os.Exit(1)
-		}
-		for _, file := range files {
-			if *verbose {
-				info, _ := os.Stat(file)
-				fmt.Printf("%s (%d bytes)\n", file, info.Size())
-			} else {
-				fmt.Println(file)
-			}
 		}
 	default:
 		fmt.Printf("未知のコマンド: %s\n", os.Args[1])
