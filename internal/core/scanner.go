@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/sabhiram/go-gitignore"
+	ignore "github.com/sabhiram/go-gitignore"
 )
 
 // Scanner は指定されたディレクトリ内の秘匿ファイルを検出します
@@ -13,6 +13,26 @@ type Scanner struct {
 	rootDir string
 	ignore  *ignore.GitIgnore
 	logger  *Logger
+}
+
+// 除外するディレクトリ名のリスト
+var excludeDirs = []string{
+	".git",          // Gitリポジトリ
+	"node_modules",  // Node.js依存関係
+	"vendor",        // 依存関係（Go, PHP, Ruby等）
+	"tmp",           // 一時ファイル
+	"cache",         // キャッシュファイル
+	"log",           // ログファイル
+	"logs",          // ログファイル
+	"coverage",      // テストカバレッジ
+	"dist",          // ビルド成果物
+	"build",         // ビルド成果物
+	".bundle",       // Bundler
+	".gradle",       // Gradle
+	".idea",         // IntelliJ IDEA
+	".vscode",       // Visual Studio Code
+	"__pycache__",   // Python
+	".pytest_cache", // Python
 }
 
 // NewScanner は新しいScannerインスタンスを作成します
@@ -38,9 +58,11 @@ func (s *Scanner) Scan() ([]string, error) {
 		}
 
 		if info.IsDir() {
-			// .git ディレクトリをスキップ
-			if info.Name() == ".git" {
-				return filepath.SkipDir
+			// 除外ディレクトリをスキップ
+			for _, dir := range excludeDirs {
+				if info.Name() == dir {
+					return filepath.SkipDir
+				}
 			}
 			s.logger.LogProgress(path)
 			return nil
