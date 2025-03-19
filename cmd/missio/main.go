@@ -32,8 +32,13 @@ func main() {
 			os.Exit(1)
 		}
 
-		scanner := core.NewScanner(args[0], *verbose, *maxDepth)
-		_, err := scanner.Scan()
+		scanner, err := core.NewScanner(args[0], *verbose, *maxDepth)
+		if err != nil {
+			fmt.Printf("エラー: %v\n", err)
+			os.Exit(1)
+		}
+
+		_, err = scanner.Scan()
 		if err != nil {
 			fmt.Printf("エラー: %v\n", err)
 			os.Exit(1)

@@ -1,0 +1,89 @@
+# 抽出するファイルパターン
+include:
+  # ファイル名のパターン（大文字小文字は区別されません）
+  names:
+    # 環境変数ファイル
+    - .env
+    - .env.
+    - .envrc
+    # キーファイル
+    - master.key
+    - credentials.yml.enc
+    # SSH鍵
+    - id_rsa
+    - id_ecdsa
+    - id_ed25519
+    # その他の認証情報
+    - oauth.key
+    - private.key
+
+  # 拡張子のパターン（先頭のドットを含めて指定）
+  extensions:
+    # 鍵・証明書ファイル
+    - .key
+    - .pem
+    - .crt
+    # キーストア
+    - .p12
+    - .pfx
+    - .jks
+    - .keystore
+
+  # パスのパターン（*でワイルドカード指定可能）
+  paths:
+    # Rails認証情報
+    - config/credentials/*
+    - config/master.key
+    # その他の一般的な場所
+    - .ssh/*
+    - secrets/*
+    - private/*
+
+# 除外するファイルパターン
+exclude:
+  # ファイル名のパターン（大文字小文字は区別されません）
+  names:
+    # サンプル・テンプレートファイル
+    - .env.example
+    - .env.sample
+    - .env.template
+    - example
+    - sample
+    - template
+    # テストファイル
+    - test
+    - spec
+    - mock
+    - stub
+    # その他
+    - readme
+    - changelog
+
+  # 拡張子のパターン（先頭のドットを含めて指定）
+  extensions:
+    # ドキュメント
+    - .md
+    - .txt
+    - .doc
+    - .docx
+    # サンプル・テンプレート
+    - .example
+    - .sample
+    - .template
+    # その他
+    - .bak
+    - .old
+
+  # パスのパターン（*でワイルドカード指定可能）
+  paths:
+    # テストディレクトリ
+    - test/*
+    - tests/*
+    - spec/*
+    - specs/*
+    # サンプル・ドキュメント
+    - examples/*
+    - docs/*
+    # その他
+    - backup/*
+    - tmp/*

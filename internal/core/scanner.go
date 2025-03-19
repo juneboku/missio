@@ -13,6 +13,7 @@ type Scanner struct {
 	rootDir string
 	ignore  *ignore.GitIgnore
 	logger  *Logger
+	config  *Config
 }
 
 // 除外するディレクトリ名のリスト
@@ -36,16 +37,23 @@ var excludeDirs = []string{
 }
 
 // NewScanner は新しいScannerインスタンスを作成します
-func NewScanner(rootDir string, verbose bool, maxDepth int) *Scanner {
+func NewScanner(rootDir string, verbose bool, maxDepth int) (*Scanner, error) {
 	// .gitignoreファイルを読み込む
 	gitIgnorePath := filepath.Join(rootDir, ".gitignore")
 	ignore, _ := ignore.CompileIgnoreFile(gitIgnorePath)
+
+	// 設定ファイルを読み込む
+	config, err := LoadConfig(rootDir)
+	if err != nil {
+		return nil, err
+	}
 
 	return &Scanner{
 		rootDir: rootDir,
 		ignore:  ignore,
 		logger:  NewLogger(rootDir, verbose, maxDepth),
-	}
+		config:  config,
+	}, nil
 }
 
 // Scan はディレクトリを走査し、秘匿ファイルのリストを返します
@@ -83,8 +91,8 @@ func (s *Scanner) Scan() ([]string, error) {
 		}
 
 		// 秘匿ファイルかどうかをチェック
-		if s.isSecretFile(path) {
-			files = append(files, relPath) // 相対パスを保存
+		if s.isSecretFile(relPath) {
+			files = append(files, relPath)
 		}
 
 		return nil
@@ -99,69 +107,46 @@ func (s *Scanner) Scan() ([]string, error) {
 }
 
 // isSecretFile はファイルが秘匿情報を含むかどうかを判定します
-func (s *Scanner) isSecretFile(path string) bool {
-	filename := filepath.Base(path)
-	ext := filepath.Ext(path)
-
-	// 秘匿ファイルのパターン
-	secretPatterns := []string{
-		// 環境変数ファイル
-		".env",
-		".env.",
-		".envrc",
-		// キーファイル
-		".key",
-		"id_rsa",
-		"id_ecdsa",
-		"id_ed25519",
-		// 認証情報
-		"credentials",
-		"credential",
-		"secret",
-		"secrets",
-		"master.key",
-		"password",
-		"token",
-		// AWS関連
-		"aws_access_key_id",
-		"aws_secret_access_key",
-		// その他
-		"oauth",
-		"private",
-	}
-
-	// 除外パターン
-	excludePatterns := []string{
-		".example",
-		".sample",
-		".template",
-		"test",
-		"spec",
-		".md",
-		".txt",
-	}
-
-	// ファイル名を小文字に変換
+func (s *Scanner) isSecretFile(relPath string) bool {
+	filename := filepath.Base(relPath)
+	ext := filepath.Ext(relPath)
 	lowerFilename := strings.ToLower(filename)
+	lowerPath := strings.ToLower(relPath)
 
 	// 除外パターンをチェック
-	for _, pattern := range excludePatterns {
-		if strings.Contains(lowerFilename, pattern) {
+	for _, pattern := range s.config.Exclude.Names {
+		if strings.Contains(lowerFilename, strings.ToLower(pattern)) {
+			return false
+		}
+	}
+
+	for _, pattern := range s.config.Exclude.Extensions {
+		if strings.EqualFold(ext, pattern) {
+			return false
+		}
+	}
+
+	for _, pattern := range s.config.Exclude.Paths {
+		if matched, _ := filepath.Match(pattern, lowerPath); matched {
 			return false
 		}
 	}
 
 	// 秘匿ファイルパターンをチェック
-	for _, pattern := range secretPatterns {
-		if strings.Contains(lowerFilename, pattern) {
+	for _, pattern := range s.config.Include.Names {
+		if strings.Contains(lowerFilename, strings.ToLower(pattern)) {
 			return true
 		}
 	}
 
-	// 特定の拡張子をチェック
-	secretExts := []string{".pem", ".crt", ".key", ".p12", ".pfx", ".jks", ".keystore"}
-	for _, secretExt := range secretExts {
-		if ext == secretExt {
+	for _, pattern := range s.config.Include.Extensions {
+		if strings.EqualFold(ext, pattern) {
+			return true
+		}
+	}
+
+	for _, pattern := range s.config.Include.Paths {
+		if matched, _ := filepath.Match(pattern, lowerPath); matched {
 			return true
 		}
 	}
